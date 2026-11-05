@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Peminjaman Ruangan Sekolah</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#17263b;--muted:#5f6c7e;--line:#d9dfe7;--bg:#eef2f6;--card:#fff;--brand:#1f4e8c;--brand-d:#163a6a;
+--ok:#1f8a5b;--ok-bg:#dff3e8;--wait:#b7791f;--wait-bg:#fdf0d2;--no:#c0392b;--no-bg:#fbe3df;--free-bg:#f6f8fb}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:15px}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid #7aa7e6;outline-offset:2px}
+.hidden{display:none!important}
+header{background:var(--ink);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+header h1{font-size:18px;margin:0;font-weight:800;flex:1}
+header .who{font-size:13px;opacity:.85}
+main{max-width:1000px;margin:0 auto;padding:20px 16px 60px}
+.btn{border:0;border-radius:8px;padding:9px 16px;font-weight:600;cursor:pointer;background:var(--brand);color:#fff}
+.btn:hover{background:var(--brand-d)}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+header .btn.ghost{border-color:#ffffff55;color:#fff}
+.btn.ok{background:var(--ok)}.btn.no{background:var(--no)}
+.btn.sm{padding:6px 11px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:wait}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px}
+label{display:block;font-weight:600;font-size:13px;margin:12px 0 5px}
+input,select,textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#fff}
+#login{max-width:380px;margin:9vh auto 0}
+#login h2{margin:0 0 4px;font-size:22px}
+#login p{margin:0 0 6px;color:var(--muted)}
+.tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.tab{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 16px;font-weight:600;cursor:pointer;color:var(--muted)}
+.tab.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.bar{display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin-bottom:14px}
+.bar>div{min-width:180px}.bar label{margin-top:0}
+.week{display:flex;align-items:center;gap:8px;margin-left:auto}
+.week b{min-width:170px;text-align:center}
+.gridwrap{overflow-x:auto}
+table.grid{border-collapse:separate;border-spacing:6px;width:100%;min-width:720px}
+.grid th{font-size:13px;text-align:center;padding:6px}
+.grid th small{display:block;color:var(--muted);font-weight:500}
+.grid th.row{text-align:left;width:120px;white-space:nowrap}
+.cell{width:100%;min-height:62px;border-radius:10px;border:1px dashed #b9c4d3;background:var(--free-bg);padding:6px;font-size:12.5px;cursor:pointer;color:var(--muted);text-align:center}
+.cell:hover:not(:disabled){border-color:var(--brand);background:#e8f0fb;color:var(--brand)}
+.cell:disabled{cursor:not-allowed;opacity:.45}
+.cell.Disetujui{background:var(--ok-bg);border:1px solid #9ad3b6;color:#0f5a3a;cursor:default}
+.cell.Menunggu{background:var(--wait-bg);border:1px solid #ecc977;color:#7a5010;cursor:default}
+.cell.mine{box-shadow:0 0 0 2px var(--brand)}
+.cell b{display:block;font-size:12px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:12px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.item{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.item:last-child{border-bottom:0}
+.item .main{flex:1;min-width:220px}
+.item .main small{color:var(--muted);display:block}
+.badge{font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px}
+.badge.Disetujui{background:var(--ok-bg);color:#0f5a3a}.badge.Menunggu{background:var(--wait-bg);color:#7a5010}.badge.Ditolak{background:var(--no-bg);color:#8d2418}
+.empty{text-align:center;color:var(--muted);padding:28px 0}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+@media(max-width:560px){.row2{grid-template-columns:1fr}.week{margin-left:0}}
+dialog{border:0;border-radius:14px;padding:22px;width:min(440px,92vw);box-shadow:0 20px 60px #0004}
+dialog::backdrop{background:#17263b99}
+dialog h3{margin:0 0 4px}
+.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:10px;font-weight:600;z-index:99;max-width:90vw}
+#toast.err{background:var(--no)}
+.setup{background:var(--wait-bg);border:1px solid #ecc977;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:14px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Peminjaman Ruangan</h1>
+  <span class="who hidden" id="who"></span>
+  <button class="btn ghost sm hidden" id="btnOut">Keluar</button>
+</header>
+
+<main>
+  <section id="login" class="card hidden">
+    <h2>Masuk</h2>
+    <p>Gunakan akun yang diberikan admin.</p>
+    <div id="setupWarn" class="setup hidden">URL Web App belum diisi. Buka <b>index.html</b> dan ganti nilai <code>API_URL</code>.</div>
+    <label for="lu">Username</label><input id="lu" autocomplete="username">
+    <label for="lp">Password</label><input id="lp" type="password" autocomplete="current-password">
+    <div class="actions"><button class="btn" id="btnLogin" style="width:100%">Masuk</button></div>
+  </section>
+
+  <section id="app" class="hidden">
+    <nav class="tabs" id="tabs"></nav>
+    <div id="view"></div>
+  </section>
+</main>
+
+<dialog id="dlg"></dialog>
+<div id="toast" class="hidden"></div>
+
+<script>
+/* ============ PENGATURAN ============ */
+const API_URL = 'https://script.google.com/macros/s/AKfycbzPRjrpl-GZ7vpP5_VTi7iozsqZuekSDkVeiLMzhOpKWYSFujRppJ15l3tRs-flftdu/exec'; // contoh: https://script.google.com/macros/s/AKfy.../exec
+/* ==================================== */
+
+const SESI = ['Jam ke-1','Jam ke-2','Jam ke-3','Pulang sekolah'];
+const HARI = ['Senin','Selasa','Rabu','Kamis','Jumat'];
+const BLN = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const iso = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const addDays = (d,n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
+const tgl = s => { const [y,m,d] = s.split('-').map(Number); return d+' '+BLN[m-1]+' '+y; };
+function mondayOf(d){ const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); const w = x.getDay();
+  if (w === 6) return addDays(x,2); if (w === 0) return addDays(x,1); return addDays(x,1-w); }
+
+const isAdmin = () => S.user.role === 'admin';
+const isSuper = () => isAdmin() && !(S.user.kelola || []).length;
+const S = { token: localStorage.getItem('tk'), user: JSON.parse(localStorage.getItem('us') || 'null'),
+  rooms: [], room: '', monday: mondayOf(new Date()), tab: 'jadwal' };
+
+async function api(action, data = {}) {
+  const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action, token: S.token, ...data }) });
+  const j = await res.json();
+  if (!j.ok) { if (j.error === 'AUTH') { logout(); throw new Error('Sesi berakhir, silakan masuk lagi'); } throw new Error(j.error); }
+  return j;
+}
+let tt;
+function toast(msg, err) { const t = $('#toast'); t.textContent = msg; t.className = err ? 'err' : ''; clearTimeout(tt); tt = setTimeout(() => t.classList.add('hidden'), 3200); }
+async function run(btn, fn) { if (btn) btn.disabled = true; try { await fn(); } catch (e) { toast(e.message || 'Gagal terhubung ke server', true); } if (btn) btn.disabled = false; }
+
+/* ---------- Login ---------- */
+function showLogin() {
+  $('#login').classList.remove('hidden'); $('#app').classList.add('hidden');
+  $('#who').classList.add('hidden'); $('#btnOut').classList.add('hidden');
+  $('#setupWarn').classList.toggle('hidden', !API_URL.includes('PASTE_URL'));
+}
+$('#btnLogin').onclick = e => run(e.target, async () => {
+  const j = await api('login', { username: $('#lu').value, password: $('#lp').value });
+  S.token = j.token; S.user = j.user;
+  localStorage.setItem('tk', j.token); localStorage.setItem('us', JSON.stringify(j.user));
+  $('#lp').value = ''; await boot();
+});
+$('#lp').onkeydown = e => { if (e.key === 'Enter') $('#btnLogin').click(); };
+function logout() { S.token = null; S.user = null; localStorage.removeItem('tk'); localStorage.removeItem('us'); showLogin(); }
+$('#btnOut').onclick = logout;
+
+async function boot() {
+  if (!S.token || !S.user) return showLogin();
+  $('#login').classList.add('hidden'); $('#app').classList.remove('hidden');
+  $('#who').textContent = S.user.nama + (isSuper() ? ' (Super Admin)' : isAdmin() ? ' (Admin: ' + S.user.kelola.join(', ') + ')' : ''); 
+  $('#who').classList.remove('hidden'); $('#btnOut').classList.remove('hidden');
+  S.tab = 'jadwal';
+  await run(null, async () => { S.rooms = (await api('rooms')).data; S.room = S.rooms[0] || ''; await render(); });
+}
+
+/* ---------- Tabs ---------- */
+function renderTabs() {
+  const t = [['jadwal','Jadwal ruangan'],['saya','Peminjaman saya']];
+  if (isAdmin()) t.push(['verif','Verifikasi']);
+  if (isSuper()) t.push(['users','Pengguna'],['ruang','Daftar ruang']);
+  $('#tabs').innerHTML = t.map(([k,l]) => `<button class="tab ${S.tab===k?'on':''}" data-k="${k}">${l}</button>`).join('');
+  $('#tabs').querySelectorAll('.tab').forEach(b => b.onclick = () => { S.tab = b.dataset.k; render(); });
+}
+async function render() {
+  renderTabs(); const v = $('#view'); v.innerHTML = '<p class="empty">Memuat…</p>';
+  try { await ({ jadwal: vJadwal, saya: vSaya, verif: vVerif, users: vUsers, ruang: vRuang })[S.tab](v); }
+  catch (e) { v.innerHTML = '<p class="empty">Gagal memuat data.</p>'; toast(e.message, true); }
+}
+
+/* ---------- Jadwal mingguan ---------- */
+async function vJadwal(v) {
+  if (!S.rooms.length) { v.innerHTML = '<div class="card empty">Belum ada ruangan. Admin dapat menambahkannya di tab Daftar ruang.</div>'; return; }
+  const from = iso(S.monday), to = iso(addDays(S.monday, 4));
+  const wk = await api('week', { from, to }); const data = wk.data; const info = wk.info || {};
+  const tutup = !isAdmin() && info.open === false; const jam = (info.buka || '06:00').replace(':', '.') + ' – ' + (info.tutup || '15:00').replace(':', '.');
+  const today = iso(new Date());
+  const days = HARI.map((h, i) => ({ h, d: iso(addDays(S.monday, i)) }));
+  let rows = SESI.map(s => `<tr><th class="row">${s}</th>` + days.map(({ d }) => {
+    const b = data.find(x => x.tanggal === d && x.sesi === s && x.ruang === S.room);
+    if (b) return `<td><div class="cell ${b.status} ${b.username === S.user.username ? 'mine' : ''}"><b>${b.status}</b>${esc(b.nama)}<br>${esc(b.keperluan)}</div></td>`;
+    const past = d < today, off = past || tutup;
+    return `<td><button class="cell" ${off ? 'disabled' : ''} data-d="${d}" data-s="${s}">${past ? '—' : tutup ? 'Tutup' : 'Kosong'}</button></td>`;
+  }).join('') + '</tr>').join('');
+  const banner = info.buka ? `<div class="${tutup ? 'setup' : ''}" style="${tutup ? '' : 'color:var(--muted);font-size:13px;margin-bottom:10px'}">${tutup ? '<b>Pengajuan sedang ditutup.</b> ' : ''}Pengajuan peminjaman dibuka setiap hari pukul ${jam} WIB.</div>` : '';
+  v.innerHTML = `<div class="card">${banner}
+    <div class="bar"><div><label for="selRoom">Ruangan</label><select id="selRoom">${S.rooms.map(r => `<option ${r===S.room?'selected':''}>${esc(r)}</option>`).join('')}</select></div>
+    <div class="week"><button class="btn ghost sm" id="prev" aria-label="Minggu sebelumnya">‹</button><b>${tgl(from)} – ${tgl(to)}</b><button class="btn ghost sm" id="next" aria-label="Minggu berikutnya">›</button></div></div>
+    <div class="gridwrap"><table class="grid"><thead><tr><th></th>${days.map(({h,d}) => `<th>${h}<small>${tgl(d)}</small></th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="legend"><span><i style="background:var(--free-bg);border:1px dashed #b9c4d3"></i>Kosong, klik untuk meminjam</span><span><i style="background:var(--wait-bg)"></i>Menunggu verifikasi</span><span><i style="background:var(--ok-bg)"></i>Disetujui</span><span><i style="box-shadow:0 0 0 2px var(--brand)"></i>Milik Anda</span></div></div>`;
+  $('#selRoom').onchange = e => { S.room = e.target.value; render(); };
+  $('#prev').onclick = () => { S.monday = addDays(S.monday, -7); render(); };
+  $('#next').onclick = () => { S.monday = addDays(S.monday, 7); render(); };
+  v.querySelectorAll('button.cell:not(:disabled)').forEach(b => b.onclick = () => bookDialog(b.dataset.d, b.dataset.s));
+}
+function bookDialog(d, s) {
+  const dlg = $('#dlg'); const idx = (new Date(d + 'T12:00:00').getDay()) - 1;
+  dlg.innerHTML = `<h3>Ajukan peminjaman</h3><p style="margin:0;color:var(--muted)">${esc(S.room)} · ${HARI[idx]}, ${tgl(d)} · ${s}</p>
+    <label for="kep">Keperluan</label><textarea id="kep" rows="3" placeholder="Contoh: Rapat OSIS, ekstrakurikuler, ujian praktik"></textarea>
+    <div class="actions"><button class="btn ghost" id="c">Batal</button><button class="btn" id="ok">Ajukan</button></div>`;
+  dlg.showModal(); $('#c').onclick = () => dlg.close();
+  $('#ok').onclick = e => run(e.target, async () => {
+    await api('book', { tanggal: d, sesi: s, ruang: S.room, keperluan: $('#kep').value });
+    dlg.close(); toast('Pengajuan terkirim, menunggu verifikasi admin'); render();
+  });
+}
+
+/* ---------- Peminjaman saya ---------- */
+async function vSaya(v) {
+  const data = (await api('mine')).data;
+  v.innerHTML = `<div class="card">${data.length ? data.map(b => `<div class="item"><div class="main"><b>${esc(b.ruang)}</b> · ${tgl(b.tanggal)} · ${esc(b.sesi)}<small>${esc(b.keperluan)}${b.catatan ? ' — Catatan admin: ' + esc(b.catatan) : ''}</small></div>
+    <span class="badge ${b.status}">${b.status}</span>${b.status === 'Menunggu' ? `<button class="btn ghost sm" data-id="${b.id}">Batalkan</button>` : ''}</div>`).join('') : '<p class="empty">Belum ada pengajuan. Pilih slot kosong di tab Jadwal ruangan.</p>'}</div>`;
+  v.querySelectorAll('button[data-id]').forEach(b => b.onclick = () => confirm('Batalkan pengajuan ini?') && run(b, async () => { await api('cancel', { id: b.dataset.id }); toast('Pengajuan dibatalkan'); render(); }));
+}
+
+/* ---------- Verifikasi (admin) ---------- */
+let filt = 'Menunggu';
+async function vVerif(v) {
+  const all = (await api('all')).data; const data = all.filter(b => filt === 'Semua' || b.status === filt);
+  const n = all.filter(b => b.status === 'Menunggu').length;
+  v.innerHTML = `<div class="card"><div class="bar"><div><label for="f">Tampilkan</label><select id="f">${['Menunggu','Disetujui','Ditolak','Semua'].map(x => `<option ${x===filt?'selected':''}>${x}</option>`).join('')}</select></div><span style="color:var(--muted)">${n} pengajuan menunggu</span></div>
+    ${data.length ? data.map(b => `<div class="item"><div class="main"><b>${esc(b.ruang)}</b> · ${tgl(b.tanggal)} · ${esc(b.sesi)}<small>${esc(b.nama)} (${esc(b.username)}) — ${esc(b.keperluan)}</small>${b.catatan ? `<small>Catatan: ${esc(b.catatan)}</small>` : ''}</div>
+    ${b.status === 'Menunggu' ? `<button class="btn ok sm" data-v="Disetujui" data-id="${b.id}">Setujui</button><button class="btn no sm" data-v="Ditolak" data-id="${b.id}">Tolak</button>` : `<span class="badge ${b.status}">${b.status}</span><button class="btn ghost sm" data-del="${b.id}">Hapus</button>`}</div>`).join('') : '<p class="empty">Tidak ada data.</p>'}</div>`;
+  $('#f').onchange = e => { filt = e.target.value; render(); };
+  v.querySelectorAll('button[data-v]').forEach(b => b.onclick = () => {
+    const catatan = b.dataset.v === 'Ditolak' ? (prompt('Alasan penolakan (opsional):') ?? null) : '';
+    if (catatan === null) return;
+    run(b, async () => { await api('verify', { id: b.dataset.id, status: b.dataset.v, catatan }); toast('Pengajuan ' + b.dataset.v.toLowerCase()); render(); });
+  });
+  v.querySelectorAll('button[data-del]').forEach(b => b.onclick = () => confirm('Hapus data ini? Slot akan kembali kosong.') && run(b, async () => { await api('cancel', { id: b.dataset.del }); render(); }));
+}
+
+/* ---------- Pengguna (admin) ---------- */
+async function vUsers(v) {
+  const data = (await api('users')).data; const rooms = (await api('rooms')).data;
+  v.innerHTML = `<div class="card"><h3 style="margin-top:0">Tambah / ubah akun</h3>
+    <div class="row2"><div><label for="nu">Username</label><input id="nu"></div><div><label for="nn">Nama lengkap</label><input id="nn"></div>
+    <div><label for="np">Password</label><input id="np" type="text" placeholder="Kosongkan jika tidak diubah"></div><div><label for="nw">No. WhatsApp</label><input id="nw" inputmode="tel" placeholder="08123456789"></div><div><label for="nr">Peran</label><select id="nr"><option value="user">User (guru/siswa)</option><option value="admin">Admin</option></select></div></div>
+    <div id="kwrap" class="hidden"><label>Ruang yang dikelola admin ini</label>${rooms.map(r => `<label style="display:inline-flex;gap:6px;align-items:center;font-weight:500;margin:2px 14px 2px 0"><input type="checkbox" value="${esc(r)}" style="width:auto">${esc(r)}</label>`).join('')}<small style="display:block;color:var(--muted);margin-top:4px">Tidak ada yang dicentang = Super Admin (semua ruang, kelola pengguna & ruang).</small></div>
+    <div class="actions"><button class="btn" id="save">Simpan akun</button></div></div>
+    <div class="card" style="margin-top:16px"><h3 style="margin-top:0">Daftar akun</h3>${data.map(u => `<div class="item"><div class="main"><b>${esc(u.nama)}</b><small>${esc(u.username)} · ${u.role === 'admin' ? (u.kelola ? 'Admin: ' + esc(u.kelola.split('|').join(', ')) : 'Super Admin') : 'User'} · ${u.wa ? 'WA ' + esc(u.wa) : 'tanpa WA'}</small></div>
+    <button class="btn ghost sm" data-e="${esc(u.username)}" data-n="${esc(u.nama)}" data-r="${u.role}" data-w="${esc(u.wa)}" data-k="${esc(u.kelola)}">Ubah</button><button class="btn ghost sm" data-d="${esc(u.username)}">Hapus</button></div>`).join('')}</div>`;
+  const tk = () => $('#kwrap').classList.toggle('hidden', $('#nr').value !== 'admin'); $('#nr').onchange = tk;
+  $('#save').onclick = e => run(e.target, async () => { await api('addUser', { username: $('#nu').value, nama: $('#nn').value, password: $('#np').value, wa: $('#nw').value, role: $('#nr').value, kelola: [...v.querySelectorAll('#kwrap input:checked')].map(x => x.value) }); toast('Akun tersimpan'); render(); });
+  v.querySelectorAll('button[data-e]').forEach(b => b.onclick = () => { $('#nu').value = b.dataset.e; $('#nn').value = b.dataset.n; $('#nr').value = b.dataset.r; $('#nw').value = b.dataset.w; const ka = (b.dataset.k || '').split('|'); v.querySelectorAll('#kwrap input').forEach(x => x.checked = ka.includes(x.value)); tk(); $('#np').focus(); });
+  v.querySelectorAll('button[data-d]').forEach(b => b.onclick = () => confirm('Hapus akun ' + b.dataset.d + '?') && run(b, async () => { await api('delUser', { username: b.dataset.d }); toast('Akun dihapus'); render(); }));
+}
+
+/* ---------- Daftar ruang (admin) ---------- */
+async function vRuang(v) {
+  S.rooms = (await api('rooms')).data; if (!S.rooms.includes(S.room)) S.room = S.rooms[0] || '';
+  v.innerHTML = `<div class="card"><div class="bar"><div style="flex:1"><label for="nr2">Nama ruang baru</label><input id="nr2" placeholder="Contoh: Lab IPA"></div><button class="btn" id="add">Tambah ruang</button></div>
+    ${S.rooms.map(r => `<div class="item"><div class="main"><b>${esc(r)}</b></div><button class="btn ghost sm" data-r="${esc(r)}">Hapus</button></div>`).join('') || '<p class="empty">Belum ada ruang.</p>'}</div>`;
+  $('#add').onclick = e => run(e.target, async () => { await api('addRoom', { nama: $('#nr2').value }); toast('Ruang ditambahkan'); render(); });
+  v.querySelectorAll('button[data-r]').forEach(b => b.onclick = () => confirm('Hapus ruang ' + b.dataset.r + '?') && run(b, async () => { await api('delRoom', { nama: b.dataset.r }); render(); }));
+}
+
+boot();
+</script>
+</body>
+</html>
