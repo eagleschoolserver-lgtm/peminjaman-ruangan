@@ -99,11 +99,13 @@ dialog h3{margin:0 0 4px}
 
 <script>
 /* ============ PENGATURAN ============ */
-const API_URL = 'https://script.google.com/macros/s/AKfycbzPRjrpl-GZ7vpP5_VTi7iozsqZuekSDkVeiLMzhOpKWYSFujRppJ15l3tRs-flftdu/exec'; // contoh: https://script.google.com/macros/s/AKfy.../exec
+const API_URL = 'https://script.google.com/macros/s/AKfycbwRshwVu13Q7HcqD7RJxBhOzYCQ7AeagKCPRyub1k58HzqwG8GWg7xL0N4mJxGR8HeW/exec'; // contoh: https://script.google.com/macros/s/AKfy.../exec
 /* ==================================== */
 
 const SESI = ['Jam ke-1','Jam ke-2','Jam ke-3','Pulang sekolah'];
 const HARI = ['Senin','Selasa','Rabu','Kamis','Jumat'];
+const HARI7 = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+const lbl = s => s.startsWith('Khusus ') ? 'Jam khusus ' + s.slice(7).replace('-', ' – ').replace(/:/g, '.') : s;
 const BLN = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -171,7 +173,7 @@ async function render() {
 async function vJadwal(v) {
   if (!S.rooms.length) { v.innerHTML = '<div class="card empty">Belum ada ruangan. Admin dapat menambahkannya di tab Daftar ruang.</div>'; return; }
   const from = iso(S.monday), to = iso(addDays(S.monday, 4));
-  const wk = await api('week', { from, to }); const data = wk.data; const info = wk.info || {};
+  const wk = await api('week', { from, to: iso(addDays(S.monday, 6)) }); const data = wk.data; const info = wk.info || {};
   const tutup = !isAdmin() && info.open === false; const jam = (info.buka || '06:00').replace(':', '.') + ' – ' + (info.tutup || '15:00').replace(':', '.');
   const today = iso(new Date());
   const days = HARI.map((h, i) => ({ h, d: iso(addDays(S.monday, i)) }));
@@ -182,15 +184,33 @@ async function vJadwal(v) {
     return `<td><button class="cell" ${off ? 'disabled' : ''} data-d="${d}" data-s="${s}">${past ? '—' : tutup ? 'Tutup' : 'Kosong'}</button></td>`;
   }).join('') + '</tr>').join('');
   const banner = info.buka ? `<div class="${tutup ? 'setup' : ''}" style="${tutup ? '' : 'color:var(--muted);font-size:13px;margin-bottom:10px'}">${tutup ? '<b>Pengajuan sedang ditutup.</b> ' : ''}Pengajuan peminjaman dibuka setiap hari pukul ${jam} WIB.</div>` : '';
+  const custom = data.filter(x => x.ruang === S.room && x.sesi.startsWith('Khusus ')).sort((a, b) => (a.tanggal + a.sesi).localeCompare(b.tanggal + b.sesi));
+  const customHtml = `<div style="margin-top:18px;border-top:1px solid var(--line);padding-top:14px"><div class="bar" style="margin-bottom:6px"><div style="flex:1"><b>Jam khusus</b><small style="display:block;color:var(--muted)">Pilih hari dan jam sendiri, misalnya Sabtu 08.00 – 12.00 (di luar jam pelajaran).</small></div><button class="btn sm" id="btnKhusus" ${tutup ? 'disabled' : ''}>+ Ajukan jam khusus</button></div>${custom.length ? custom.map(b => `<div class="item"><div class="main"><b>${HARI7[new Date(b.tanggal + 'T12:00:00').getDay()]}, ${tgl(b.tanggal)} · ${esc(lbl(b.sesi).slice(11))}</b><small>${esc(b.nama)} — ${esc(b.keperluan)}${b.username === S.user.username ? ' · milik Anda' : ''}</small></div><span class="badge ${b.status}">${b.status}</span></div>`).join('') : '<p class="empty" style="padding:12px 0">Belum ada jam khusus pada minggu ini.</p>'}</div>`;
   v.innerHTML = `<div class="card">${banner}
     <div class="bar"><div><label for="selRoom">Ruangan</label><select id="selRoom">${S.rooms.map(r => `<option ${r===S.room?'selected':''}>${esc(r)}</option>`).join('')}</select></div>
     <div class="week"><button class="btn ghost sm" id="prev" aria-label="Minggu sebelumnya">‹</button><b>${tgl(from)} – ${tgl(to)}</b><button class="btn ghost sm" id="next" aria-label="Minggu berikutnya">›</button></div></div>
     <div class="gridwrap"><table class="grid"><thead><tr><th></th>${days.map(({h,d}) => `<th>${h}<small>${tgl(d)}</small></th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>
+    ${customHtml}
     <div class="legend"><span><i style="background:var(--free-bg);border:1px dashed #b9c4d3"></i>Kosong, klik untuk meminjam</span><span><i style="background:var(--wait-bg)"></i>Menunggu verifikasi</span><span><i style="background:var(--ok-bg)"></i>Disetujui</span><span><i style="box-shadow:0 0 0 2px var(--brand)"></i>Milik Anda</span></div></div>`;
   $('#selRoom').onchange = e => { S.room = e.target.value; render(); };
   $('#prev').onclick = () => { S.monday = addDays(S.monday, -7); render(); };
   $('#next').onclick = () => { S.monday = addDays(S.monday, 7); render(); };
+  $('#btnKhusus').onclick = khususDialog;
   v.querySelectorAll('button.cell:not(:disabled)').forEach(b => b.onclick = () => bookDialog(b.dataset.d, b.dataset.s));
+}
+function khususDialog() {
+  const dlg = $('#dlg'); const min = iso(new Date()), sat = iso(addDays(S.monday, 5));
+  dlg.innerHTML = `<h3>Ajukan jam khusus</h3><p style="margin:0;color:var(--muted)">${esc(S.room)}</p>
+    <label for="kd">Tanggal (Senin – Sabtu)</label><input id="kd" type="date" min="${min}" value="${sat >= min ? sat : min}">
+    <div class="row2"><div><label for="k1">Jam mulai</label><input id="k1" type="time" value="08:00"></div><div><label for="k2">Jam selesai</label><input id="k2" type="time" value="12:00"></div></div>
+    <label for="kk">Keperluan</label><textarea id="kk" rows="3" placeholder="Contoh: Latihan paduan suara, rapat panitia"></textarea>
+    <div class="actions"><button class="btn ghost" id="c">Batal</button><button class="btn" id="ok">Ajukan</button></div>`;
+  dlg.showModal(); $('#c').onclick = () => dlg.close();
+  $('#ok').onclick = e => run(e.target, async () => {
+    if (!$('#kd').value || !$('#k1').value || !$('#k2').value) throw new Error('Tanggal dan jam wajib diisi');
+    await api('book', { tanggal: $('#kd').value, jamMulai: $('#k1').value, jamSelesai: $('#k2').value, ruang: S.room, keperluan: $('#kk').value });
+    dlg.close(); toast('Pengajuan jam khusus terkirim, menunggu verifikasi admin'); render();
+  });
 }
 function bookDialog(d, s) {
   const dlg = $('#dlg'); const idx = (new Date(d + 'T12:00:00').getDay()) - 1;
@@ -207,7 +227,7 @@ function bookDialog(d, s) {
 /* ---------- Peminjaman saya ---------- */
 async function vSaya(v) {
   const data = (await api('mine')).data;
-  v.innerHTML = `<div class="card">${data.length ? data.map(b => `<div class="item"><div class="main"><b>${esc(b.ruang)}</b> · ${tgl(b.tanggal)} · ${esc(b.sesi)}<small>${esc(b.keperluan)}${b.catatan ? ' — Catatan admin: ' + esc(b.catatan) : ''}</small></div>
+  v.innerHTML = `<div class="card">${data.length ? data.map(b => `<div class="item"><div class="main"><b>${esc(b.ruang)}</b> · ${tgl(b.tanggal)} · ${esc(lbl(b.sesi))}<small>${esc(b.keperluan)}${b.catatan ? ' — Catatan admin: ' + esc(b.catatan) : ''}</small></div>
     <span class="badge ${b.status}">${b.status}</span>${b.status === 'Menunggu' ? `<button class="btn ghost sm" data-id="${b.id}">Batalkan</button>` : ''}</div>`).join('') : '<p class="empty">Belum ada pengajuan. Pilih slot kosong di tab Jadwal ruangan.</p>'}</div>`;
   v.querySelectorAll('button[data-id]').forEach(b => b.onclick = () => confirm('Batalkan pengajuan ini?') && run(b, async () => { await api('cancel', { id: b.dataset.id }); toast('Pengajuan dibatalkan'); render(); }));
 }
@@ -218,7 +238,7 @@ async function vVerif(v) {
   const all = (await api('all')).data; const data = all.filter(b => filt === 'Semua' || b.status === filt);
   const n = all.filter(b => b.status === 'Menunggu').length;
   v.innerHTML = `<div class="card"><div class="bar"><div><label for="f">Tampilkan</label><select id="f">${['Menunggu','Disetujui','Ditolak','Semua'].map(x => `<option ${x===filt?'selected':''}>${x}</option>`).join('')}</select></div><span style="color:var(--muted)">${n} pengajuan menunggu</span></div>
-    ${data.length ? data.map(b => `<div class="item"><div class="main"><b>${esc(b.ruang)}</b> · ${tgl(b.tanggal)} · ${esc(b.sesi)}<small>${esc(b.nama)} (${esc(b.username)}) — ${esc(b.keperluan)}</small>${b.catatan ? `<small>Catatan: ${esc(b.catatan)}</small>` : ''}</div>
+    ${data.length ? data.map(b => `<div class="item"><div class="main"><b>${esc(b.ruang)}</b> · ${tgl(b.tanggal)} · ${esc(lbl(b.sesi))}<small>${esc(b.nama)} (${esc(b.username)}) — ${esc(b.keperluan)}</small>${b.catatan ? `<small>Catatan: ${esc(b.catatan)}</small>` : ''}</div>
     ${b.status === 'Menunggu' ? `<button class="btn ok sm" data-v="Disetujui" data-id="${b.id}">Setujui</button><button class="btn no sm" data-v="Ditolak" data-id="${b.id}">Tolak</button>` : `<span class="badge ${b.status}">${b.status}</span><button class="btn ghost sm" data-del="${b.id}">Hapus</button>`}</div>`).join('') : '<p class="empty">Tidak ada data.</p>'}</div>`;
   $('#f').onchange = e => { filt = e.target.value; render(); };
   v.querySelectorAll('button[data-v]').forEach(b => b.onclick = () => {
